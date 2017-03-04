@@ -447,6 +447,12 @@ function View:doubleTouch(ta,tb)
     if sl > 0.001 and el > 0.001 then
         s = el/sl
         theta = ed:angleBetween(sd)
+        if self.maxZoom then
+            s = math.max(s,self.intScale/self.maxZoom)
+        end
+        if self.minZoom then
+            s = math.min(s,self.intScale/self.minZoom)
+        end
     end
     o = (eb + ea)/2
     A = self.matrix
