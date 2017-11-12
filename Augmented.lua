@@ -16,7 +16,7 @@ function Augmented:init(t,s,a)
 end
 
 function Augmented:start()
-    if not self.active then
+    if not self.active or not craft.ar.isSupported then
         return
     end
     local grid = readImage("Documents:GridWhite")
@@ -47,7 +47,7 @@ function Augmented:start()
 end
 
 function Augmented:isTouchedBy(t)
-    if not self.active then
+    if not self.active or not craft.ar.isSupported then
         return false
     end
     if not self.placed then
