@@ -876,9 +876,16 @@ function addBlock(t)
         c = {c,c,c,c,c,c,c,c}
     end
     local f = t.faces or BlockFaces
+    local nf = 6*#f
     local to = t.texOrigin or vec2(0,0)
     local ts = t.texSize or vec2(1,1)
     local dt = 1
+    local tr = {1,1,1,1,1,1}
+    if t.faceRotations then
+        for k,v in ipairs(t.faceRotations) do
+            tr[k] = 2^v
+        end
+    end
     if t.singleImage then
         dt = 0
         ts.x = ts.x * 6
@@ -969,10 +976,10 @@ function addBlock(t)
             vec3(1,1,1)/2
         }
     end
-    if p > m.size - 36 then
-        m:resize(p + 35)
+    if p > m.size - nf then
+        m:resize(p + nf-1)
     end
-    local np = __doBlock(m,p,f,v,c,to,ts,dt,l,am)
+    local np = __doBlock(m,p,f,v,c,to,ts,tr,dt,l,am)
     if ret then
         return m,p,np
     else
@@ -988,10 +995,11 @@ v table of vertices of block
 c table of colours of block (per vertex of block)
 to offset for this shape's segment of the texture
 ts size of this shape's segment of the texture
+tr face rotations
 dt step size for the texture tiling
 l light vector
 --]]
-function __doBlock(m,p,f,v,c,to,ts,dt,l,am)
+function __doBlock(m,p,f,v,c,to,ts,tr,dt,l,am)
     local n,t,tv
     t = 0
     l = l / 2
@@ -1001,7 +1009,7 @@ function __doBlock(m,p,f,v,c,to,ts,dt,l,am)
             m:vertex(p,v[w[u]])
             m:color(p,c[w[u]]:mix(color(0,0,0,c[w[u]].a),am+(1-am)*math.max(0,l:dot(n))))
             m:normal(p,n)
-            tv = BlockTex[u] + t*vec2(1/6,0)
+            tv = BlockTex[(u*tr[k])%5] + t*vec2(1/6,0)
             tv.x = tv.x * ts.x
             tv.y = tv.y * ts.y
             m:texCoord(p, to + tv)
@@ -1368,6 +1376,8 @@ These make the above available as methods on a mesh.
 --]]
 local mt = getmetatable(mesh())
 
+if not mt.__extended then
+
 local __addShape = function(m,f,t)
     t = t or {}
     local nt = {}
@@ -1406,6 +1416,8 @@ mt.addSphereSegment = function(m,t)
     return __addShape(m,addSphereSegment,t)
 end
 
+    mt.__extended = true
+    end
 
 --[[
 Adds a triangle to a mesh, with specific vertices, colours, normals, and texture coordinates.
