@@ -40,6 +40,12 @@ function PseudoMesh:color(k,v)
     end
 end
 
+function PseudoMesh:setColors(c)
+    for k=1,self.size do
+        self.colors[k] = c
+    end
+end
+
 function PseudoMesh:resize(k)
     self.size = k
 end
@@ -156,6 +162,34 @@ function extendModel()
         local m = PseudoMesh()
         mm.addSphereSegment(m,t)
         return m:toModel()
+    end)
+
+    rawset(mt.___class,"append", function(s,m,o)
+        o = o or vec3(0,0,0)
+        local nv = s.vertexCount
+        local ni = s.indexCount
+        local n = m.size
+        s:resizeVertices(nv+n)
+        s:resizeIndices(ni+n)
+        local i = {}
+        for k=1,n,3 do
+            if (m.vertices[k+1] - m.vertices[k]):cross(m.vertices[k+2] - m.vertices[k]):dot(m.normals[k+1] + m.normals[k+2] + m.normals[k]) < 0 then
+                table.insert(i,k)
+                table.insert(i,k+1)
+                table.insert(i,k+2)
+            else
+                table.insert(i,k)
+                table.insert(i,k+2)
+                table.insert(i,k+1)
+            end
+        end
+        for k=1,n do
+            s:position(nv+k,m.vertices[k]+o)
+            s:normal(nv+k,m.normals[k])
+            s:color(nv+k,m.colors[k])
+            s:uv(nv+k,m.texCoords[k])
+            s:addElement(i[k])
+        end
     end)
 
     rawset(mt,"__extended",true)
