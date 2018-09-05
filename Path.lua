@@ -69,7 +69,7 @@ function Path:generate()
     end
     self.lastPoint = s
     --debug:log({name = "path", message = "got called"})
-    print("got called")
+    -- print("got called")
     self:makeMesh(ver)
 end
 
