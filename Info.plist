@@ -29,6 +29,8 @@
 		<string>TrendGraph</string>
 		<string>Zoom</string>
 		<string>ccConfig</string>
+		<string>PseudoMesh</string>
+		<string>ViewCraft</string>
 	</array>
 	<key>Description</key>
 	<string>No description available</string>
