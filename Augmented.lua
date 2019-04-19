@@ -17,7 +17,7 @@ end
 
 function Augmented:start()
     if not self.active or not craft.ar.isSupported then
-        return
+        return false
     end
     local grid = readImage("Documents:GridWhite")
     local planes={}
@@ -44,6 +44,7 @@ function Augmented:start()
             planes[v.identifier] = nil
         end
     end
+    return true
 end
 
 function Augmented:isTouchedBy(t)

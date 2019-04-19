@@ -19,6 +19,7 @@
 		<string>Explosion</string>
 		<string>MeshExt</string>
 		<string>Path</string>
+		<string>Snowfall</string>
 		<string>TextNode</string>
 		<string>View</string>
 		<string>ViewCraft</string>
@@ -31,5 +32,7 @@
 	</array>
 	<key>Description</key>
 	<string>No description available</string>
+	<key>Imported</key>
+	<true/>
 </dict>
 </plist>

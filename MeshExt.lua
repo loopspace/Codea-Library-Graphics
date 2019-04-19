@@ -366,6 +366,106 @@ function __doPoly(m,p,n,o,v,t,col,to,ts,f,cl,l,am)
 end
 
 --[[
+The difference between a cone and a polygon is that for a cone we specify the apex in advance.  If no apex is specified, we pass to the polygon.
+--]]
+
+function addCone(t)
+    t = t or {}
+    if not t.apex then
+        return addPolygon(t)
+    end
+    local m,ret,rl = __initmesh(t.mesh, t.light, t.ambience, t.intensity, t.texture, t.basicLighting)
+    local p = t.position or (m.size + 1)
+    p = p + (1-p)%3
+    local ip = p
+    local col = t.colour or t.color or color(255, 255, 255, 255)
+    local f = true
+    local to = t.texOrigin or vec2(0,0)
+    local ts = t.texSize or vec2(1,1)
+    if t.faceted ~= nil then
+        f = t.faceted
+    end
+    local cl = true
+    if t.closed ~= nil then
+        cl = t.closed
+    end
+    local l,am
+    if rl then
+        l = vec3(0,0,0)
+        am = 1
+    else
+        l = t.light or vec3(0,0,0)
+        if t.intensity then
+            l = l:normalize()*t.intensity
+        elseif l:lenSqr() > 1 then
+            l = l:normalize()
+        end
+        am = t.ambience or (1 - l:len())
+    end
+    local v = t.vertices or {}
+    local a = t.apex
+    local c = vec3(0,0,0)
+    local n = 0
+    for k,u in ipairs(v) do
+        c = c + u
+        n = n + 1
+    end
+    local size = p-1+3*n+3
+    if not closed then
+        size = size - 3
+    end
+    if m.size<size then
+        m:resize(size)
+    end
+    c = c/n
+    local cv = {}
+    for k,u in ipairs(v) do
+        table.insert(cv,u-c)
+    end
+    local nml = vec3(0,0,0)
+    for k=2,n do
+        nml = nml + cv[k]:cross(cv[k-1])
+    end
+    if cl then
+        nml = nml + cv[1]:cross(cv[n])
+    end
+    nml = nml:normalize()
+    local o = t.viewFrom or 1
+    if type(o) == "number" then
+        o = o * nml + c
+    end
+    local tx
+    if t.texCoords then
+        tx = t.texCoords
+    else
+        tx = {}
+        local mx = (cv[1] - cv[1]:dot(nml)*nml):normalize()
+        local my = nml:cross(mx):normalize()
+        table.insert(tx,vec2(a:dot(mx),a:dot(my)))
+        for k,u in ipairs(cv) do
+            table.insert(tx,vec2(u:dot(mx),u:dot(my)))
+        end
+        mx,my = tx[1],tx[1]
+        for k,u in ipairs(tx) do
+            mx.x = math.min(mx.x,u.x)
+            mx.y = math.min(mx.y,u.y)
+            my.x = math.max(my.x,u.x)
+            my.y = math.max(my.y,u.y)
+        end
+        for k,u in ipairs(tx) do
+            tx[k] = vec2((u.x-mx.x)/(my.x-mx.x),(u.y-mx.y)/(my.y-mx.y))
+        end
+    end
+    p = __doCone(m,p,n,o,a,v,tx,col,to,ts,f,cl,l,am)
+    if rt then
+        return m,ip,p
+    else
+        return m
+    end
+end
+
+
+--[[
 | Option | Default | Description |
 |:-------|:--------|:------------|
 | `mesh` | new mesh | The mesh to add the shape to. |
@@ -615,9 +715,9 @@ function __doFacetedClosedCylinder(m,p,n,o,u,v,ut,vt,col,l,am)
         end
         cv = col:mix(color(0,0,0,col.a),am+(1-am)*math.max(0,l:dot(nv)))
         cu = col:mix(color(0,0,0,col.a),am+(1-am)*math.max(0,l:dot(nu)))
-        __addTriangle(m,p,v[j],v[k],u[j],cv,cv,cu,nv,nv,nu,vt[j],vt[k],ut[j])
+        __addTriangle(m,p,v[j],v[k],u[j],cv,cv,cu,nv,nv,nu,vt[k+1],vt[k],ut[k+1])
         p = p + 3
-        __addTriangle(m,p,v[k],u[j],u[k],cv,cu,cu,nv,nu,nu,vt[k],ut[j],ut[k])
+        __addTriangle(m,p,v[k],u[j],u[k],cv,cu,cu,nv,nu,nu,vt[k],ut[k+1],ut[k])
         p = p + 3
     end
     return p
@@ -660,9 +760,9 @@ function __doSmoothClosedCylinder(m,p,n,o,u,v,ut,vt,col,l,am)
         nu[j] = __discreteNormal(u[j],o,u[k],v[j],u[i])
         cv[j] = col:mix(color(0,0,0,col.a),am+(1-am)*math.max(0,l:dot(nv[j])))
         cu[j] = col:mix(color(0,0,0,col.a),am+(1-am)*math.max(0,l:dot(nu[j])))
-        __addTriangle(m,p,v[j],v[k],u[j],cv[j],cv[k],cu[j],nv[j],nv[k],nu[j],vt[j],vt[k],ut[j])
+        __addTriangle(m,p,v[j],v[k],u[j],cv[j],cv[k],cu[j],nv[j],nv[k],nu[j],vt[k+1],vt[k],ut[k+1])
         p = p + 3
-        __addTriangle(m,p,v[k],u[j],u[k],cv[k],cu[j],cu[k],nv[k],nu[j],nu[k],vt[k],ut[j],ut[k])
+        __addTriangle(m,p,v[k],u[j],u[k],cv[k],cu[j],cu[k],nv[k],nu[j],nu[k],vt[k],ut[k+1],ut[k])
         p = p + 3
     end
     return p
@@ -1399,6 +1499,10 @@ end
 mt.addPolygon = function(m,t)
     return __addShape(m,addPolygon,t)
 end
+    
+mt.addCone = function(m,t)
+    return __addShape(m,addCone,t)
+end
 
 mt.addBlock = function(m,t)
     return __addShape(m,addBlock,t)
@@ -1591,6 +1695,8 @@ end
 
 local exports = {
     lighting = lighting,
+    addCone = addCone,
+    addPolygon = addPolygon,
     addBlock = addBlock,
     addJewel = addJewel,
     addPyramid = addPyramid,

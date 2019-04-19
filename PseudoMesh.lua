@@ -64,6 +64,10 @@ function PseudoMesh:addPolygon(t)
     return mm.addPolygon(self,t)
 end
 
+function PseudoMesh:addCone(t)
+    return mm.addCone(self,t)
+end
+
 function PseudoMesh:addBlock(t)
     return mm.addBlock(self,t)
 end
